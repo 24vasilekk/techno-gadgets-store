@@ -7,16 +7,14 @@ import { ProductGrid } from '@/components/sections/product-grid';
 import { Button } from '@/components/ui/button';
 import { storeRepository } from '@/features/data-layer/repository';
 import { usePreferences } from '@/features/preferences/preferences-context';
+import { resolveProductsByIds } from '@/features/preferences/selection-utils';
 
 export function FavoritesClient(): JSX.Element {
   const { favoriteIds, favoritesCount, clearFavorites } = usePreferences();
   const products = storeRepository.getPublicProducts();
 
   const favoriteProducts = useMemo(
-    () =>
-      favoriteIds
-        .map((id) => products.find((product) => product.id === id))
-        .filter((product): product is NonNullable<typeof product> => Boolean(product)),
+    () => resolveProductsByIds(favoriteIds, products),
     [favoriteIds, products]
   );
 

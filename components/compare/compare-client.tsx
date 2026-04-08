@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { storeRepository } from '@/features/data-layer/repository';
 import { usePreferences } from '@/features/preferences/preferences-context';
+import { resolveProductsByIds } from '@/features/preferences/selection-utils';
 import { formatPrice } from '@/lib/format';
 
 export function CompareClient(): JSX.Element {
@@ -13,10 +14,7 @@ export function CompareClient(): JSX.Element {
   const products = storeRepository.getPublicProducts();
 
   const compareProducts = useMemo(
-    () =>
-      compareIds
-        .map((id) => products.find((product) => product.id === id))
-        .filter((product): product is NonNullable<typeof product> => Boolean(product)),
+    () => resolveProductsByIds(compareIds, products),
     [compareIds, products]
   );
 

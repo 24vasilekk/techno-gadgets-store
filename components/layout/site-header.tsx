@@ -11,6 +11,7 @@ import { useStoreSettings } from '@/features/admin/store-settings';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { useCart } from '@/features/cart/cart-context';
 import { usePreferences } from '@/features/preferences/preferences-context';
+import { useBodyScrollLock } from '@/lib/hooks/use-body-scroll-lock';
 import { motionTokens } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +30,7 @@ const menuItems = [
   { href: '/favorites', label: 'Избранное', counter: 'favorites' as const },
   { href: '/compare', label: 'Сравнение', counter: 'compare' as const }
 ];
+type MenuCounter = 'cart' | 'favorites' | 'compare';
 
 type NavLinkProps = {
   href: string;
@@ -67,12 +69,14 @@ export function SiteHeader(): JSX.Element {
     setMenuOpen(false);
   }, [pathname]);
 
-  useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [menuOpen]);
+  useBodyScrollLock(menuOpen);
+
+  const getCounterValue = (counter?: MenuCounter): number => {
+    if (counter === 'cart') return totalItems;
+    if (counter === 'favorites') return favoritesCount;
+    if (counter === 'compare') return compareCount;
+    return 0;
+  };
 
   return (
     <header className="sticky top-0 z-50 px-2 py-2 sm:px-3 md:py-3">
@@ -194,19 +198,9 @@ export function SiteHeader(): JSX.Element {
                     >
                       <span>{item.label}</span>
                       <span className="inline-flex items-center gap-2">
-                        {item.counter === 'cart' && totalItems > 0 ? (
+                        {getCounterValue(item.counter) > 0 ? (
                           <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                            {totalItems}
-                          </span>
-                        ) : null}
-                        {item.counter === 'favorites' && favoritesCount > 0 ? (
-                          <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                            {favoritesCount}
-                          </span>
-                        ) : null}
-                        {item.counter === 'compare' && compareCount > 0 ? (
-                          <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                            {compareCount}
+                            {getCounterValue(item.counter)}
                           </span>
                         ) : null}
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />

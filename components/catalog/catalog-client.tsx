@@ -11,61 +11,25 @@ import { ProductCard, ProductCardSkeleton } from '@/components/product/product-c
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { type HomeBlockConfig } from '@/features/admin/home-blocks';
+import {
+  catalogFiltersToSearchParams,
+  createDefaultCatalogFilters,
+  parseCatalogFilters,
+  toggleFilterValue,
+  type CatalogFilterState,
+  type SortKey
+} from '@/features/catalog/filters';
 import { storeRepository } from '@/features/data-layer/repository';
 import { useStoreSettings } from '@/features/admin/store-settings';
 import { formatPrice } from '@/lib/format';
+import { useBodyScrollLock } from '@/lib/hooks/use-body-scroll-lock';
 import { motionTokens } from '@/lib/motion';
-import type { Category, HomeMainCategory, Product } from '@/types/catalog';
+import type { Category, Product } from '@/types/catalog';
 
 type CatalogClientProps = {
   products: Product[];
   categories: Category[];
 };
-
-type SortKey = 'popular' | 'new' | 'price';
-
-type FilterState = {
-  q: string;
-  category: string;
-  mainBlock: '' | HomeMainCategory;
-  brands: string[];
-  colors: string[];
-  inStock: boolean;
-  minPrice: string;
-  maxPrice: string;
-  sort: SortKey;
-};
-
-function parseFilters(searchParams: URLSearchParams): FilterState {
-  const rawSort = searchParams.get('sort');
-  const sort: SortKey = rawSort === 'new' || rawSort === 'price' ? rawSort : 'popular';
-  const rawMainBlock = searchParams.get('mainBlock');
-  const mainBlock: '' | HomeMainCategory =
-    rawMainBlock === 'apple' ||
-    rawMainBlock === 'accessories' ||
-    rawMainBlock === 'smartphones' ||
-    rawMainBlock === 'other'
-      ? rawMainBlock
-      : '';
-
-  return {
-    q: searchParams.get('q') ?? '',
-    category: searchParams.get('category') ?? '',
-    mainBlock,
-    brands: (searchParams.get('brands') ?? '')
-      .split(',')
-      .map((value) => value.trim())
-      .filter(Boolean),
-    colors: (searchParams.get('colors') ?? '')
-      .split(',')
-      .map((value) => value.trim())
-      .filter(Boolean),
-    inStock: searchParams.get('inStock') === '1',
-    minPrice: searchParams.get('minPrice') ?? '',
-    maxPrice: searchParams.get('maxPrice') ?? '',
-    sort
-  };
-}
 
 export function CatalogClient({ products, categories }: CatalogClientProps): JSX.Element {
   const settings = useStoreSettings();
@@ -91,7 +55,9 @@ export function CatalogClient({ products, categories }: CatalogClientProps): JSX
     [runtimeProducts]
   );
 
-  const [filters, setFilters] = useState<FilterState>(parseFilters(new URLSearchParams(searchParams.toString())));
+  const [filters, setFilters] = useState<CatalogFilterState>(
+    parseCatalogFilters(new URLSearchParams(searchParams.toString()))
+  );
 
   useEffect(() => {
     setRuntimeProducts(storeRepository.getPublicProducts());
@@ -99,46 +65,28 @@ export function CatalogClient({ products, categories }: CatalogClientProps): JSX
   }, []);
 
   useEffect(() => {
-    setFilters(parseFilters(new URLSearchParams(searchParams.toString())));
+    setFilters(parseCatalogFilters(new URLSearchParams(searchParams.toString())));
     setIsFiltering(true);
     const timer = window.setTimeout(() => setIsFiltering(false), 140);
     return () => window.clearTimeout(timer);
   }, [searchParams]);
 
-  useEffect(() => {
-    document.body.style.overflow = mobileFiltersOpen ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [mobileFiltersOpen]);
+  useBodyScrollLock(mobileFiltersOpen);
 
-  const setUrlFilters = (next: FilterState) => {
-    const params = new URLSearchParams();
-
-    if (next.q) params.set('q', next.q);
-    if (next.category) params.set('category', next.category);
-    if (next.mainBlock) params.set('mainBlock', next.mainBlock);
-    if (next.brands.length) params.set('brands', next.brands.join(','));
-    if (next.colors.length) params.set('colors', next.colors.join(','));
-    if (next.inStock) params.set('inStock', '1');
-    if (next.minPrice) params.set('minPrice', next.minPrice);
-    if (next.maxPrice) params.set('maxPrice', next.maxPrice);
-    if (next.sort !== 'popular') params.set('sort', next.sort);
-
-    const query = params.toString();
+  const setUrlFilters = (next: CatalogFilterState) => {
+    const query = catalogFiltersToSearchParams(next).toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
-  const updateFilters = (patch: Partial<FilterState>) => {
+  const updateFilters = (patch: Partial<CatalogFilterState>) => {
     const next = { ...filters, ...patch };
     setFilters(next);
     setUrlFilters(next);
   };
 
   const toggleMultiValue = (field: 'brands' | 'colors', value: string) => {
-    const exists = filters[field].includes(value);
-    const nextValues = exists ? filters[field].filter((item) => item !== value) : [...filters[field], value];
-    updateFilters({ [field]: nextValues } as Partial<FilterState>);
+    const nextValues = toggleFilterValue(filters[field], value);
+    updateFilters({ [field]: nextValues } as Partial<CatalogFilterState>);
   };
 
   const filteredProducts = useMemo(() => {
@@ -184,17 +132,7 @@ export function CatalogClient({ products, categories }: CatalogClientProps): JSX
   }, [runtimeProducts, categories, filters, homeBlocks]);
 
   const clearFilters = () => {
-    const reset: FilterState = {
-      q: '',
-      category: '',
-      mainBlock: '',
-      brands: [],
-      colors: [],
-      inStock: false,
-      minPrice: '',
-      maxPrice: '',
-      sort: 'popular'
-    };
+    const reset = createDefaultCatalogFilters();
     setFilters(reset);
     setUrlFilters(reset);
   };
