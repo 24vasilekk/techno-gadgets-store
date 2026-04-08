@@ -1,0 +1,25 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="86" y1="62" x2="1110" y2="590" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#14171D"/>
+      <stop offset="1" stop-color="#0D0E12"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(940 140) rotate(132.305) scale(330 310)">
+      <stop stop-color="#FF4FAD" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#FF4FAD" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" rx="0" fill="url(#bg)"/>
+  <rect x="40" y="40" width="1120" height="550" rx="32" stroke="rgba(255,255,255,0.14)" stroke-width="2"/>
+  <circle cx="940" cy="140" r="280" fill="url(#glow)"/>
+  <text x="110" y="250" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="84" font-weight="700" letter-spacing="-1.4">
+    Techno Agents
+  </text>
+  <text x="110" y="320" fill="#FF58B2" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="600">
+    Современный магазин техники
+  </text>
+  <text x="110" y="382" fill="#C7CBD4" font-family="Arial, Helvetica, sans-serif" font-size="28">
+    iPhone • Apple Watch • Аксессуары • Смартфоны
+  </text>
+</svg>
+
